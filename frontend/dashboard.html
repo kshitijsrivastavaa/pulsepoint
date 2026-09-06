@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PulsePoint — India's Tech Job Market, Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="vendor/chart.umd.js"></script>
+<style>
+  :root{
+    --ink:#0B1615;
+    --panel:#122220;
+    --panel-2:#183330;
+    --line:#234641;
+    --text:#EAF3F1;
+    --muted:#84A79F;
+    --signal:#2DD4BF;
+    --signal-dim:#123A35;
+    --accent:#F4B740;
+    --accent-2:#FF8A5B;
+    --danger:#F2665A;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--ink);
+    color:var(--text);
+    font-family:'Space Grotesk',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;}
+
+  header{
+    padding:28px 32px 20px;
+    border-bottom:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .brand{display:flex; align-items:center; gap:12px;}
+  .pulse-dot{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--signal);
+    box-shadow:0 0 0 0 rgba(74,222,128,0.6);
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(74,222,128,0.55);}
+    70%{box-shadow:0 0 0 9px rgba(74,222,128,0);}
+    100%{box-shadow:0 0 0 0 rgba(74,222,128,0);}
+  }
+  h1{font-size:22px; font-weight:700; margin:0; letter-spacing:-0.01em;}
+  .tagline{color:var(--muted); font-size:14px; margin-top:2px;}
+  .status{
+    text-align:right;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .status .mono{color:var(--signal);}
+
+  main{
+    padding:28px 32px 48px;
+    max-width:1280px;
+    margin:0 auto;
+  }
+
+  .toolbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .toolbar-left{color:var(--muted); font-size:13px;}
+  button#refreshBtn{
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:9px 16px;
+    border-radius:6px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+    font-weight:500;
+    cursor:pointer;
+  }
+  button#refreshBtn:hover{border-color:var(--accent);}
+  button#refreshBtn:disabled{opacity:0.5; cursor:default;}
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap:18px;
+  }
+  .grid-full{grid-column:1/-1;}
+  @media (max-width:860px){
+    .grid{grid-template-columns:1fr;}
+  }
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:20px 20px 16px;
+  }
+  .card-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:14px;
+  }
+  .card-head h2{
+    font-size:15px;
+    font-weight:600;
+    margin:0;
+  }
+  .card-head span{
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .empty-state{
+    color:var(--muted);
+    font-size:13px;
+    padding:32px 8px;
+    text-align:center;
+    line-height:1.6;
+  }
+  .empty-state code{
+    background:var(--panel-2);
+    padding:2px 6px;
+    border-radius:4px;
+    color:var(--accent-2);
+  }
+
+  canvas{max-height:280px;}
+  .chart-wrap{position:relative; height:280px; width:100%;}
+
+  .skill-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:9px;
+    font-size:13px;
+  }
+  .skill-name{width:110px; flex-shrink:0; color:var(--text);}
+  .skill-bar-track{flex:1; background:var(--panel-2); border-radius:4px; height:8px; overflow:hidden;}
+  .skill-bar-fill{height:100%; background:var(--accent); border-radius:4px;}
+  .skill-count{width:32px; text-align:right; color:var(--muted); font-size:12px;}
+
+  .city-row{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .city-row:last-child{border-bottom:none;}
+  .city-count{color:var(--accent-2); font-weight:600;}
+
+  footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    padding:24px 0 8px;
+  }
+  footer a{color:var(--accent);}
+
+  .kpi-row{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:14px;
+    margin-bottom:20px;
+  }
+  @media (max-width:860px){ .kpi-row{grid-template-columns:1fr 1fr;} }
+  .kpi{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:16px 18px;
+  }
+  .kpi-label{
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+  .kpi-value{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:26px;
+    font-weight:600;
+    color:var(--text);
+  }
+  .kpi-value.accent{color:var(--signal);}
+  .kpi-sub{
+    font-size:11px;
+    color:var(--muted);
+    margin-top:4px;
+  }
+
+  .search-card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px 20px;
+    margin-bottom:20px;
+  }
+  .search-row{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    align-items:stretch;
+  }
+  .search-row input[type="text"]{
+    flex:2 1 240px;
+    min-width:0;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:11px 14px;
+    border-radius:6px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+    line-height:1.4;
+  }
+  .search-row input[type="text"]::placeholder{
+    color:var(--muted);
+    opacity:0.75;
+  }
+  .search-row select{
+    flex:1 1 150px;
+    min-width:0;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    padding:11px 14px;
+    border-radius:6px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+  }
+  .search-row button{
+    flex:0 0 auto;
+    background:var(--accent);
+    border:none;
+    color:#12201E;
+    padding:11px 24px;
+    border-radius:6px;
+    font-family:'Space Grotesk',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  @media (max-width:640px){
+    .search-row input[type="text"], .search-row select, .search-row button{
+      flex:1 1 100%;
+    }
+  }
+  .search-row button:hover{opacity:0.9;}
+
+  .result-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 0;
+    border-bottom:1px solid var(--line);
+    gap:16px;
+  }
+  .result-row:last-child{border-bottom:none;}
+  .result-title{font-size:14px; font-weight:600; color:var(--text);}
+  .result-meta{font-size:12px; color:var(--muted); margin-top:2px;}
+  .result-tag{
+    font-size:11px;
+    color:var(--accent);
+    background:var(--signal-dim);
+    padding:3px 8px;
+    border-radius:4px;
+    white-space:nowrap;
+  }
+  .result-link{
+    font-size:12px;
+    color:var(--accent);
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  .result-link:hover{text-decoration:underline;}
+  #searchResults{margin-top:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="brand">
+      <span class="pulse-dot"></span>
+      <h1>PulsePoint</h1>
+    </div>
+    <div class="tagline">India's tech job market, live.</div>
+  </div>
+  <div class="status">
+    <div>API: <span class="mono" id="apiStatus">checking…</span></div>
+    <div>Last refreshed: <span class="mono" id="lastRefreshed">—</span></div>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <div class="toolbar-left">Live ingestion from Adzuna · refreshed on demand or via daily cron</div>
+    <button id="refreshBtn" onclick="loadAll()">Refresh data</button>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">POSTINGS TRACKED</div>
+      <div class="kpi-value" id="kpiTotal">—</div>
+      <div class="kpi-sub" id="kpiTotalSub">&nbsp;</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">TOP SKILL IN DEMAND</div>
+      <div class="kpi-value accent" id="kpiTopSkill">—</div>
+      <div class="kpi-sub" id="kpiTopSkillSub">&nbsp;</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">TOP HIRING CITY</div>
+      <div class="kpi-value" id="kpiTopCity">—</div>
+      <div class="kpi-sub" id="kpiTopCitySub">&nbsp;</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">LEADING ROLE CATEGORY</div>
+      <div class="kpi-value" id="kpiTopRole">—</div>
+      <div class="kpi-sub" id="kpiTopRoleSub">&nbsp;</div>
+    </div>
+  </div>
+
+  <div class="search-card">
+    <div class="card-head">
+      <h2>Search postings</h2>
+      <span>filter by keyword, city, or role</span>
+    </div>
+    <div class="search-row">
+      <input type="text" id="searchQuery" placeholder="e.g. backend developer, react, analyst…" />
+      <select id="searchCity"><option value="">All cities</option></select>
+      <select id="searchRole"><option value="">All roles</option></select>
+      <select id="searchExperience"><option value="">Any experience</option><option value="fresher">Fresher / Entry-level</option><option value="experienced">Experienced</option></select>
+      <button onclick="runSearch()">Search</button>
+    </div>
+    <div id="searchResults"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-head">
+        <h2>Trending skills</h2>
+        <span>most-mentioned in current postings</span>
+      </div>
+      <div id="skillsContainer"><div class="empty-state">Loading…</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Hiring by city</h2>
+        <span>postings per location</span>
+      </div>
+      <div id="cityContainer"><div class="empty-state">Loading…</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <h2>Role breakdown</h2>
+        <span>by category</span>
+      </div>
+      <div class="chart-wrap"><canvas id="roleChart"></canvas></div>
+    </div>
+
+    <div class="card grid-full">
+      <div class="card-head">
+        <h2>Postings over time</h2>
+        <span>ingestion volume by day</span>
+      </div>
+      <div class="chart-wrap"><canvas id="timeChart"></canvas></div>
+    </div>
+  </div>
+
+  <footer>
+    PulsePoint · Built by Kshitij Srivastava · powered by FastAPI + Adzuna live job data ·
+    <a href="/docs" target="_blank">API docs</a>
+  </footer>
+</main>
+
+<script>
+  // Point this at your deployed Render backend URL, e.g.
+  // "https://pulsepoint-api.onrender.com"
+  const API_BASE = window.PULSEPOINT_API_BASE || "http://127.0.0.1:8000";
+
+  const SKILL_DISPLAY_OVERRIDES = {
+    'sql':'SQL','aws':'AWS','gcp':'GCP','html':'HTML','css':'CSS','ci/cd':'CI/CD',
+    'power bi':'Power BI','rest api':'REST API','graphql':'GraphQL','next.js':'Next.js',
+    'node.js':'Node.js','c++':'C++','c#':'C#',
+  };
+  function formatSkill(skill){
+    if(SKILL_DISPLAY_OVERRIDES[skill]) return SKILL_DISPLAY_OVERRIDES[skill];
+    return skill.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+
+  let roleChart, timeChart;
+
+  async function fetchJSON(path){
+    const res = await fetch(API_BASE + path);
+    if(!res.ok) throw new Error(path + " failed: " + res.status);
+    return res.json();
+  }
+
+  function emptyState(msg){
+    return `<div class="empty-state">${msg}<br/><br/>Run <code>POST /ingest</code> on the API to pull live postings from Adzuna, then refresh.</div>`;
+  }
+
+  async function loadSkills(){
+    const el = document.getElementById('skillsContainer');
+    try{
+      const data = await fetchJSON('/trending-skills?limit=10');
+      if(!data.length){ el.innerHTML = emptyState("No skills data yet."); return; }
+      const max = Math.max(...data.map(d => d.count));
+      el.innerHTML = data.map(d => `
+        <div class="skill-row">
+          <div class="skill-name mono">${formatSkill(d.skill)}</div>
+          <div class="skill-bar-track"><div class="skill-bar-fill" style="width:${(d.count/max*100).toFixed(0)}%"></div></div>
+          <div class="skill-count mono">${d.count}</div>
+        </div>`).join('');
+    }catch(e){ el.innerHTML = emptyState("Couldn't reach the API."); }
+  }
+
+  async function loadCities(){
+    const el = document.getElementById('cityContainer');
+    try{
+      const data = await fetchJSON('/hiring-by-city?limit=10');
+      if(!data.length){ el.innerHTML = emptyState("No city data yet."); return; }
+      el.innerHTML = data.map(d => `
+        <div class="city-row">
+          <span>${d.city}</span>
+          <span class="city-count mono">${d.count}</span>
+        </div>`).join('');
+    }catch(e){ el.innerHTML = emptyState("Couldn't reach the API."); }
+  }
+
+  async function loadRoleChart(){
+    const wrap = document.getElementById('roleChart').closest('.chart-wrap');
+    if(typeof Chart === 'undefined'){
+      wrap.innerHTML = '<div class="empty-state">Chart.js failed to load from the CDN — check your internet connection or an ad-blocker/extension may be blocking cdnjs.cloudflare.com.</div>';
+      return;
+    }
+    try{
+      const data = await fetchJSON('/role-breakdown');
+      if(!data.length){ wrap.innerHTML = '<div class="empty-state">No role data yet.</div>'; return; }
+      const ctx = document.getElementById('roleChart');
+      const labels = data.map(d => d.role);
+      const counts = data.map(d => d.count);
+      const palette = ['#F4B740','#2DD4BF','#FF8A5B','#F2665A','#84A79F','#8EE4D6','#FFD97D','#5AA9E6'];
+      if(roleChart) roleChart.destroy();
+      roleChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: counts, backgroundColor: palette, borderColor: '#122220', borderWidth: 2 }] },
+        options: {
+          plugins: { legend: { position: 'right', labels: { color: '#EAF3F1', font: { family: 'Space Grotesk', size: 11 } } } }
+        }
+      });
+    }catch(e){
+      console.error('PulsePoint: role chart failed:', e);
+      wrap.innerHTML = '<div class="empty-state">Couldn\'t load role breakdown: ' + e.message + '</div>';
+    }
+  }
+
+  async function loadTimeChart(){
+    const wrap = document.getElementById('timeChart').closest('.chart-wrap');
+    if(typeof Chart === 'undefined'){
+      wrap.innerHTML = '<div class="empty-state">Chart.js failed to load from the CDN — check your internet connection or an ad-blocker/extension may be blocking cdnjs.cloudflare.com.</div>';
+      return;
+    }
+    try{
+      const data = await fetchJSON('/postings-over-time');
+      if(!data.length){ wrap.innerHTML = '<div class="empty-state">No trend data yet.</div>'; return; }
+      const ctx = document.getElementById('timeChart');
+      if(timeChart) timeChart.destroy();
+      timeChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.map(d => d.date),
+          datasets: [{
+            label: 'Postings ingested',
+            data: data.map(d => d.count),
+            borderColor: '#2DD4BF',
+            backgroundColor: 'rgba(45,212,191,0.14)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 3,
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#84A79F', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: '#234641' } },
+            y: { ticks: { color: '#84A79F', font: { family: 'IBM Plex Mono', size: 10 } }, grid: { color: '#234641' }, beginAtZero: true }
+          }
+        }
+      });
+    }catch(e){
+      console.error('PulsePoint: time chart failed:', e);
+      wrap.innerHTML = '<div class="empty-state">Couldn\'t load postings over time: ' + e.message + '</div>';
+    }
+  }
+
+  async function loadKPIs(){
+    try{
+      const [postings, skills, cities, roles] = await Promise.all([
+        fetchJSON('/postings?limit=1000'),
+        fetchJSON('/trending-skills?limit=1'),
+        fetchJSON('/hiring-by-city?limit=1'),
+        fetchJSON('/role-breakdown'),
+      ]);
+      document.getElementById('apiStatus').textContent = 'connected';
+
+      document.getElementById('kpiTotal').textContent = postings.length;
+      document.getElementById('kpiTotalSub').textContent = 'across all sources';
+
+      if(skills.length){
+        document.getElementById('kpiTopSkill').textContent = formatSkill(skills[0].skill);
+        document.getElementById('kpiTopSkillSub').textContent = `mentioned in ${skills[0].count} postings`;
+      }
+      if(cities.length){
+        document.getElementById('kpiTopCity').textContent = cities[0].city;
+        document.getElementById('kpiTopCitySub').textContent = `${cities[0].count} open roles`;
+      }
+      if(roles.length){
+        const topRole = [...roles].sort((a,b) => b.count - a.count)[0];
+        document.getElementById('kpiTopRole').textContent = topRole.role;
+        document.getElementById('kpiTopRoleSub').textContent = `${topRole.count} postings`;
+      }
+    }catch(e){
+      document.getElementById('apiStatus').textContent = 'offline';
+    }
+  }
+
+  async function loadAll(){
+    const btn = document.getElementById('refreshBtn');
+    btn.disabled = true; btn.textContent = 'Refreshing…';
+    await Promise.all([loadKPIs(), loadSkills(), loadCities(), loadRoleChart(), loadTimeChart(), populateSearchFilters()]);
+    document.getElementById('lastRefreshed').textContent = new Date().toLocaleTimeString();
+    btn.disabled = false; btn.textContent = 'Refresh data';
+  }
+
+  async function populateSearchFilters(){
+    try{
+      const [cities, roles] = await Promise.all([
+        fetchJSON('/hiring-by-city?limit=30'),
+        fetchJSON('/role-breakdown'),
+      ]);
+      const citySel = document.getElementById('searchCity');
+      const roleSel = document.getElementById('searchRole');
+      // Keep the "All ___" option, drop the rest, then rebuild.
+      citySel.innerHTML = '<option value="">All cities</option>' +
+        cities.map(c => `<option value="${c.city}">${c.city}</option>`).join('');
+      roleSel.innerHTML = '<option value="">All roles</option>' +
+        roles.map(r => `<option value="${r.role}">${r.role}</option>`).join('');
+    }catch(e){ /* dropdowns just stay at "All" if this fails */ }
+  }
+
+  async function runSearch(){
+    const q = document.getElementById('searchQuery').value.trim();
+    const city = document.getElementById('searchCity').value;
+    const role = document.getElementById('searchRole').value;
+    const el = document.getElementById('searchResults');
+    el.innerHTML = `<div class="empty-state">Searching…</div>`;
+
+    const params = new URLSearchParams({ limit: '25' });
+    if(q) params.set('q', q);
+    if(city) params.set('city', city);
+    if(role) params.set('role', role);
+    const experience = document.getElementById('searchExperience').value;
+    if(experience) params.set('experience', experience);
+
+    try{
+      const data = await fetchJSON('/postings?' + params.toString());
+      if(!data.length){
+        el.innerHTML = `<div class="empty-state">No postings match that search.</div>`;
+        return;
+      }
+      el.innerHTML = data.map(p => `
+        <div class="result-row">
+          <div>
+            <div class="result-title">${p.title}${p.company ? ' · ' + p.company : ''}</div>
+            <div class="result-meta">${p.city || 'Unknown'} ${p.role_category ? '· ' + p.role_category : ''}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            ${p.role_category ? `<span class="result-tag">${p.role_category}</span>` : ''}
+            ${p.source_url ? `<a class="result-link" href="${p.source_url}" target="_blank">View →</a>` : ''}
+          </div>
+        </div>`).join('');
+    }catch(e){
+      el.innerHTML = `<div class="empty-state">Couldn't reach the API.</div>`;
+    }
+  }
+
+  // Let Enter key trigger search too, not just the button.
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('searchQuery');
+    if(input) input.addEventListener('keydown', e => { if(e.key === 'Enter') runSearch(); });
+  });
+
+  loadAll();
+</script>
+</body>
+</html>
